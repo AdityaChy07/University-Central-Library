@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { pingServerHealth } from '../services/api';
 import {
   ArrowRight,
   Landmark,
@@ -22,8 +23,24 @@ const Login = ({ showToast }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [serverReady, setServerReady] = useState(null); // null = waking up, true = ready, false = unreachable
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Pre-warm cloud API server immediately when Login page opens
+  useEffect(() => {
+    let active = true;
+    pingServerHealth()
+      .then(() => {
+        if (active) setServerReady(true);
+      })
+      .catch(() => {
+        if (active) setServerReady(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const hour = new Date().getHours();
   const greeting =
@@ -147,14 +164,42 @@ const Login = ({ showToast }) => {
           {/* Right Sign-In Form */}
           <div className="md:col-span-3 p-6 sm:p-8 flex flex-col justify-center space-y-6">
             <div className="border-b border-slate-200 pb-3">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Secure Access Gate
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  <ShieldCheck className="w-3 h-3" />
-                  <span>Encrypted RBAC</span>
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      serverReady === true
+                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                        : serverReady === null
+                        ? 'text-amber-700 bg-amber-50 border-amber-200'
+                        : 'text-red-700 bg-red-50 border-red-200'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        serverReady === true
+                          ? 'bg-emerald-500'
+                          : serverReady === null
+                          ? 'bg-amber-500 animate-ping'
+                          : 'bg-red-500'
+                      }`}
+                    />
+                    <span>
+                      {serverReady === true
+                        ? 'API Ready'
+                        : serverReady === null
+                        ? 'Waking Server...'
+                        : 'Server Standby'}
+                    </span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>Encrypted RBAC</span>
+                  </span>
+                </div>
               </div>
               <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                 Member Identity Verification

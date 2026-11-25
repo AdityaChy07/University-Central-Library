@@ -28,8 +28,13 @@ const loginUser = async (req, res) => {
     // 1. Cloud MongoDB Atlas (when connected)
     if (mongoose.connection.readyState === 1) {
       const cleanLower = clean.toLowerCase();
+      const cleanUpper = clean.toUpperCase();
+      const memberIdAliases = [cleanUpper];
+      if (cleanUpper === 'LIB-001') memberIdAliases.push('LIB-ADMIN');
+      if (cleanUpper === 'LIB-ADMIN') memberIdAliases.push('LIB-001');
+
       const member = await Member.findOne({
-        $or: [{ email: cleanLower }, { memberId: clean.toUpperCase() }],
+        $or: [{ email: cleanLower }, { memberId: { $in: memberIdAliases } }],
       });
 
       if (!member) {

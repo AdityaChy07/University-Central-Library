@@ -69,11 +69,8 @@ const startServer = async () => {
   console.log('  SMART LIBRARY MANAGEMENT SYSTEM - BACKEND START   ');
   console.log('----------------------------------------------------');
 
-  // Connect MongoDB Atlas & initialize empty cluster if needed
-  const dbReady = await connectDB();
-  if (dbReady) {
-    await seedIfEmpty();
-  }
+  // Connect MongoDB Atlas & initialize empty cluster if needed (also on delayed reconnect)
+  await connectDB(seedIfEmpty);
 
   // Initialize Neo4j Driver
   initNeo4j();

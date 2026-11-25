@@ -1,4 +1,6 @@
+const mongoose = require('mongoose');
 const { getNeo4jSession, getNeo4jStatus } = require('../config/neo4j');
+const mockDb = require('./mockDbService');
 
 /**
  * Neo4j Graph Service
@@ -530,10 +532,13 @@ const runCustomCypher = async (query, params = {}, models = null) => {
     }
     const qLower = query.toLowerCase();
     const { Author, Book, Member, BorrowRecord } = models;
+    const isMongoConnected = mongoose.connection.readyState === 1;
     let records = [];
 
     if (qLower.includes('wrote')) {
-      const books = await Book.find().populate('authorId', 'name country').limit(25);
+      const books = isMongoConnected
+        ? await Book.find().populate('authorId', 'name country').limit(25)
+        : mockDb.getAllBooks().slice(0, 25);
       records = books.map((b) => ({
         Author: b.authorId?.name || 'Unknown Author',
         Book: b.title,
@@ -541,10 +546,12 @@ const runCustomCypher = async (query, params = {}, models = null) => {
         Category: b.category,
       }));
     } else if (qLower.includes('borrowed')) {
-      const borrows = await BorrowRecord.find()
-        .populate('memberId', 'name memberId')
-        .populate('bookId', 'title')
-        .limit(25);
+      const borrows = isMongoConnected
+        ? await BorrowRecord.find()
+            .populate('memberId', 'name memberId')
+            .populate('bookId', 'title')
+            .limit(25)
+        : mockDb.getBorrowRecords().slice(0, 25);
       records = borrows.map((r) => ({
         Member: r.memberId?.name || 'Unknown Member',
         Book: r.bookId?.title || 'Unknown Book',
@@ -552,11 +559,17 @@ const runCustomCypher = async (query, params = {}, models = null) => {
         DueDate: r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : '',
       }));
     } else {
-      const [authors, books, members] = await Promise.all([
-        Author.find().limit(10),
-        Book.find().limit(10),
-        Member.find().select('-password').limit(10),
-      ]);
+      const [authors, books, members] = isMongoConnected
+        ? await Promise.all([
+            Author.find().limit(10),
+            Book.find().limit(10),
+            Member.find().select('-password').limit(10),
+          ])
+        : [
+            mockDb.getAllAuthors().slice(0, 10),
+            mockDb.getAllBooks().slice(0, 10),
+            mockDb.getAllMembers().slice(0, 10),
+          ];
       records = [
         ...authors.map((a) => ({ NodeType: 'Author', Name: a.name, Info: a.country || '' })),
         ...books.map((b) => ({ NodeType: 'Book', Name: b.title, Info: b.isbn })),
@@ -566,7 +579,7 @@ const runCustomCypher = async (query, params = {}, models = null) => {
 
     return {
       success: true,
-      source: 'MONGODB_FALLBACK',
+      source: isMongoConnected ? 'MONGODB_FALLBACK' : 'LOCAL_FALLBACK',
       records,
       count: records.length,
     };

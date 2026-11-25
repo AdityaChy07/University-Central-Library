@@ -1,5 +1,7 @@
 const cron = require('node-cron');
+const mongoose = require('mongoose');
 const BorrowRecord = require('../models/BorrowRecord');
+const mockDb = require('../services/mockDbService');
 const { calculateFine, getZonedDateParts } = require('../utils/dateUtils');
 const { sendOverdueEmail } = require('../services/emailService');
 
@@ -21,12 +23,17 @@ const runOverdueEmailScan = async () => {
   const todayParts = getZonedDateParts(now).dateStr; // "YYYY-MM-DD" in Asia/Kolkata
 
   try {
-    const overdueLoans = await BorrowRecord.find({
-      status: 'ISSUED',
-      dueDate: { $lt: now },
-    })
-      .populate('memberId')
-      .populate('bookId');
+    const overdueLoans =
+      mongoose.connection.readyState === 1
+        ? await BorrowRecord.find({
+            status: 'ISSUED',
+            dueDate: { $lt: now },
+          })
+            .populate('memberId')
+            .populate('bookId')
+        : mockDb
+            .getBorrowRecords({ status: 'ISSUED' })
+            .filter((r) => r.isCurrentlyOverdue || new Date(r.dueDate) < now);
 
     console.log(`[Scheduler] Found ${overdueLoans.length} active overdue loan(s).`);
 
@@ -64,7 +71,9 @@ const runOverdueEmailScan = async () => {
 
         if (res.success) {
           record.lastOverdueEmailDate = now;
-          await record.save();
+          if (typeof record.save === 'function') {
+            await record.save();
+          }
           sentCount++;
         } else {
           failureCount++;

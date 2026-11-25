@@ -8,8 +8,9 @@ let retryInterval = null;
 // Allow fast failure timeout if network blocks port 27017
 mongoose.set('bufferTimeoutMS', 3000);
 
-const connectDB = async () => {
-  const mongoUri = process.env.MONGODB_URI;
+const connectDB = async (onConnected = null) => {
+  const rawUri = process.env.MONGODB_URI;
+  const mongoUri = rawUri ? rawUri.trim().replace(/^["']|["']$/g, '') : '';
 
   if (!mongoUri) {
     lastAtlasError = 'MONGODB_URI is not configured in server/.env.';
@@ -38,6 +39,9 @@ const connectDB = async () => {
       clearInterval(retryInterval);
       retryInterval = null;
     }
+    if (typeof onConnected === 'function') {
+      await onConnected();
+    }
     return true;
   } catch (error) {
     // Retry once with public Google / Cloudflare DNS if local ISP blocks SRV lookups
@@ -61,6 +65,9 @@ const connectDB = async () => {
           clearInterval(retryInterval);
           retryInterval = null;
         }
+        if (typeof onConnected === 'function') {
+          await onConnected();
+        }
         return true;
       } catch (retryErr) {
         lastAtlasError = retryErr.message;
@@ -72,10 +79,10 @@ const connectDB = async () => {
     connectionMode = 'LOCAL_FALLBACK';
 
     console.warn(
-      `[MongoDB] Atlas unreachable on current Wi-Fi (${lastAtlasError}). Running in LOCAL_FALLBACK mode.`
+      `[MongoDB] Atlas unreachable (${lastAtlasError}). Running in LOCAL_FALLBACK mode.`
     );
     console.warn(
-      '[MongoDB] Notice: To link live with Atlas, connect via Mobile Hotspot or deploy to Render/Cloud.'
+      '[MongoDB] Notice: To link live with Atlas, verify MONGODB_URI password or connect via non-restricted network.'
     );
 
     // Auto-retry in background every 20 seconds
@@ -83,7 +90,7 @@ const connectDB = async () => {
       retryInterval = setInterval(async () => {
         if (mongoose.connection.readyState !== 1) {
           try {
-            await connectDB();
+            await connectDB(onConnected);
           } catch (e) {
             // silent retry
           }

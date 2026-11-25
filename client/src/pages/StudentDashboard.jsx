@@ -106,7 +106,7 @@ const StudentDashboard = ({ showToast }) => {
               <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                 Enrolled Student Portal
               </span>
-              <span className="text-[11px] text-slate-500 font-medium">14-Day Institutional Loan Rule</span>
+              <span className="text-[11px] text-slate-500 font-medium">7-Day Institutional Loan Rule</span>
             </div>
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight mt-1">
               {user?.name}

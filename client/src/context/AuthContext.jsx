@@ -28,9 +28,19 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('library_token', jwtToken);
       return { success: true, user: userData };
     } catch (err) {
+      let message = err.response?.data?.message;
+      if (!message) {
+        if (err.code === 'ECONNABORTED' || err.message?.toLowerCase().includes('timeout')) {
+          message = 'Cloud server is waking up (first load takes ~45s). Please click Sign In again.';
+        } else if (!err.response) {
+          message = 'Unable to reach library API server. Please wait a few seconds and retry.';
+        } else {
+          message = `Login failed (HTTP ${err.response.status}). Please verify your credentials.`;
+        }
+      }
       return {
         success: false,
-        message: err.response?.data?.message || 'Login failed. Please verify your credentials.',
+        message,
       };
     }
   };

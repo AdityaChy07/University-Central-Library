@@ -1,15 +1,22 @@
 import axios from 'axios';
 
-// Dynamic API base URL: Uses VITE_API_URL when deployed (e.g. on Vercel pointing to Render)
-// or defaults to local '/api' proxy for localhost development
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+const PRODUCTION_API_URL = 'https://university-library-api-e0gj.onrender.com/api';
+
+// Use VITE_API_URL if explicitly set, '/api' proxy on localhost, or live Render API in production
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || (isLocalhost ? '/api' : PRODUCTION_API_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  // 75s timeout gives Render Free Tier instances time to wake from sleep (~50s)
+  timeout: 75000,
 });
 
 // Attach Authorization header if JWT token exists
@@ -26,6 +33,7 @@ export const loginApi = (credentials) => api.post('/auth/login', credentials);
 export const getMeApi = () => api.get('/auth/me');
 export const updateProfileApi = (data) => api.put('/auth/profile', data);
 export const changePasswordApi = (data) => api.put('/auth/change-password', data);
+export const pingServerHealth = () => api.get('/health', { timeout: 75000 });
 
 // Books API
 export const getBooks = (params) => api.get('/books', { params });

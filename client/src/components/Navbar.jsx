@@ -98,35 +98,41 @@ const Navbar = ({ onRefreshData, showToast }) => {
         {/* Real-Time Database Health Telemetry */}
         <div className="hidden md:flex items-center gap-2 border-r border-slate-200 pr-3">
           {/* MongoDB Atlas Indicator */}
-          <div
-            title={
-              status.mongodb?.connected
-                ? `MongoDB (${status.mongodb?.mode || 'ATLAS'}): ${status.mongodb?.host || 'Connected'}`
-                : status.mongodb?.atlasError
-                ? `MongoDB Atlas: ${status.mongodb.atlasError}`
-                : 'MongoDB Atlas: Connected'
-            }
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-200 cursor-help ${
-              status.mongodb?.connected
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-xs'
-                : 'bg-amber-50 text-amber-800 border-amber-200'
-            }`}
-          >
-            <span className="relative flex h-2 w-2">
-              {status.mongodb?.connected && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              )}
-              <span
-                className={`relative inline-flex rounded-full h-2 w-2 ${
-                  status.mongodb?.connected ? 'bg-emerald-500' : 'bg-amber-500'
+          {(() => {
+            const isAtlasLive =
+              status.mongodb?.realAtlasConnected === true || status.mongodb?.mode === 'ATLAS';
+            return (
+              <div
+                title={
+                  isAtlasLive
+                    ? `MongoDB Atlas Connected: ${status.mongodb?.host || 'Cluster0'}`
+                    : status.mongodb?.atlasError
+                    ? `Fallback Mode — Atlas Error: ${status.mongodb.atlasError}`
+                    : 'Running in Local Fallback Mode (MongoDB Atlas disconnected)'
+                }
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-200 cursor-help ${
+                  isAtlasLive
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-xs'
+                    : 'bg-amber-50 text-amber-800 border-amber-200'
                 }`}
-              ></span>
-            </span>
-            <Database className="w-3 h-3 opacity-80" />
-            <span className="font-semibold">
-              {status.mongodb?.connected ? 'Atlas: Online' : 'Atlas: Configured'}
-            </span>
-          </div>
+              >
+                <span className="relative flex h-2 w-2">
+                  {isAtlasLive && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  )}
+                  <span
+                    className={`relative inline-flex rounded-full h-2 w-2 ${
+                      isAtlasLive ? 'bg-emerald-500' : 'bg-amber-500'
+                    }`}
+                  ></span>
+                </span>
+                <Database className="w-3 h-3 opacity-80" />
+                <span className="font-semibold">
+                  {isAtlasLive ? 'Atlas: Online' : 'DB: Fallback Mode'}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Neo4j Indicator */}
           <div

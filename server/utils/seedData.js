@@ -93,10 +93,10 @@ const seedDatabase = async () => {
     console.log('[Seeder] Seeding 3 Core User Accounts...');
     const membersData = [
       {
-        memberId: 'LIB-ADMIN',
+        memberId: 'LIB-001',
         name: 'Chief Librarian',
         email: 'librarian@university.edu',
-        password: 'admin123',
+        password: 'Admin@123',
         role: 'LIBRARIAN',
         department: 'Central University Library',
         phone: '+91 98765 00001',
@@ -104,9 +104,9 @@ const seedDatabase = async () => {
       },
       {
         memberId: 'TEA-101',
-        name: 'Prof. Rajesh Sharma',
+        name: 'Dr. S. Radhakrishnan',
         email: 'rajesh.sharma@faculty.edu',
-        password: 'teacher123',
+        password: 'Teacher@123',
         role: 'TEACHER', // 45-day retention privilege
         department: 'Computer Science & Engineering',
         phone: '+91 98765 00101',
@@ -116,7 +116,7 @@ const seedDatabase = async () => {
         memberId: 'STU-201',
         name: 'Aditya Choudhary',
         email: 'aditya.choudhary@student.edu',
-        password: 'student123',
+        password: 'Student@123',
         role: 'STUDENT', // 7-day retention rule, fee clearance
         department: 'Computer Science (B.Tech)',
         phone: '+91 98765 00201',

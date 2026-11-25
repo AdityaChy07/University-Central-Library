@@ -25,7 +25,7 @@ const Sidebar = ({ overdueCount = 0 }) => {
 
   if (user?.role === 'STUDENT') {
     portalSectionTitle = 'STUDENT PORTAL';
-    roleSubtitle = '14-Day Lending Rule';
+    roleSubtitle = '7-Day Lending Rule';
     navItems = [
       { to: '/student-dashboard', label: 'Overview & Fee Clearance', icon: LayoutDashboard },
       { to: '/books', label: 'Library Catalog', icon: BookOpen },
